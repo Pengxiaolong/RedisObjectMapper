@@ -32,6 +32,24 @@ public class KeySerializerHelper {
     }
   }
 
+  public String serializeKeyPattern(Object object){
+    try{
+      EntityInfo<?> entityInfo = EntityInfoFactory.getEntityInfo(object.getClass());
+      List<KeyInfo> keyInfos = entityInfo.getKeyComponents();
+      Object[] keyComponents = new Object[keyInfos.size() + 1];
+      keyComponents[0] = entityInfo.getName();
+
+      for(int i = 0; i < keyInfos.size(); i++){
+        Object keyComponentValue = getKeyComponentValue(keyInfos.get(i), object);
+        keyComponents[i+1] = (keyComponentValue == null ? "*" : keyComponentValue);
+      }
+
+      return StringUtils.join(keyComponents, ":");
+    }catch (InvocationTargetException | IllegalAccessException ex){
+      throw new RuntimeException(ex);
+    }
+  }
+
   public <E> E deserializeKey(String key, EntityInfo<E> entityInfo) {
     String[] keyComponents = key.split(":");
     List<KeyInfo> keyInfos = entityInfo.getKeyComponents();
@@ -54,7 +72,7 @@ public class KeySerializerHelper {
 
   private static <T> Object getKeyComponentValue(KeyInfo keyInfo, T entity) throws InvocationTargetException, IllegalAccessException {
     Object propertyValue = keyInfo.getProperty().getReadMethod().invoke(entity);
-    if(keyInfo.getProperty().getPropertyType() == Date.class){
+    if(keyInfo.getProperty().getPropertyType() == Date.class && propertyValue != null){
       propertyValue = DateFormatUtils.format((Date) propertyValue, keyInfo.getDateFormat());
     }
     return propertyValue;

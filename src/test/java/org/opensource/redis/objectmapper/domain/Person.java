@@ -17,7 +17,7 @@ import java.util.Date;
 @Entity()
 public class Person {
   @KeyComponent(index = 1)
-  private long id;
+  private Long id;
   @Index
   private String name;
   @Index

@@ -1,6 +1,7 @@
 package org.opensource.redis.objectmapper.serializer;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonFilter;
 import org.codehaus.jackson.map.ser.FilterProvider;
 import org.codehaus.jackson.map.ser.impl.SimpleBeanPropertyFilter;
 import org.codehaus.jackson.map.ser.impl.SimpleFilterProvider;
@@ -25,7 +26,15 @@ public class JsonBasedEntitySerializer<T> implements EntitySerializer<T, String>
 
   static {
     objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+    objectMapper.getSerializationConfig().addMixInAnnotations(Object.class, PropertyFilterMixIn.class );
   }
+
+  @JsonFilter(PropertyFilterMixIn.filterId)
+  static class PropertyFilterMixIn
+  {
+    final static String filterId = "filter properties by name";
+  }
+
 
   private JsonBasedEntitySerializer(EntityInfo<T> entityInfo) {
     this.entityInfo = entityInfo;
@@ -73,7 +82,7 @@ public class JsonBasedEntitySerializer<T> implements EntitySerializer<T, String>
       }
 
       properties.add("class");
-      filterProvider.addFilter("excludes", SimpleBeanPropertyFilter.serializeAllExcept(properties));
+      filterProvider.addFilter(PropertyFilterMixIn.filterId, SimpleBeanPropertyFilter.serializeAllExcept(properties));
       filterProviders.put(entityInfo.getClass(), filterProvider);
     }
     return filterProviders.get(entityInfo.getClass());

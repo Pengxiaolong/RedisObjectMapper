@@ -2,6 +2,7 @@ package org.opensource.redis.objectmapper.serializer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -11,21 +12,17 @@ import java.util.Date;
  *
  */
 public class StringConverter {
-  public static final String dataFormat = "YYYY";
+  public static final String dateFormat = "yyyy-MM-dd HH:mm:ss";
 
-  public StringConverter(String dateFormat) {
+  private StringConverter() {
   }
 
 
   public static String convertToString(Object data) {
     if (data instanceof Date) {
-
+      return DateFormatUtils.format((Date) data, dateFormat);
     }
     return String.valueOf(data);
-  }
-
-  public static String convertToString(Date date, String dateFormat) {
-    return DateFormatUtils.format(date, dateFormat);
   }
 
   public static <T> T convertFromString(String rowData, Class<T> type) {
@@ -54,8 +51,7 @@ public class StringConverter {
       } else if (type == BigInteger.class) {
         return (T) (isNotBlankData ? new BigInteger(rowData) : BigInteger.ZERO);
       } else if (type == Date.class) {
-        return null;
-        //return isNotBlankData ? dateFormatHolder.get().parseObject(rowData) : null;
+        return isNotBlankData ? (T) DateUtils.parseDate(rowData, dateFormat) : null;
       } else {
         throw new RuntimeException(
                 String.format("Not support convert filed to value of type %s. only support boolean, char, byte, short, int, long, float, double, string, BigDecimal, BigInteger",
@@ -65,10 +61,5 @@ public class StringConverter {
       throw new RuntimeException(e);
     }
 
-  }
-
-  public static void main(String[] args) {
-    System.out.println(new Date() instanceof Date);
-    System.out.println(new java.sql.Date(System.currentTimeMillis()) instanceof Date);
   }
 }

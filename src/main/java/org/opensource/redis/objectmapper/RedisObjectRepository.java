@@ -38,13 +38,17 @@ public abstract class RedisObjectRepository<T> {
   public abstract void save(@Nonnull T object);
   public abstract void save(@Nonnull List<T> objects);
   public abstract void deleteByKey(@Nonnull T keyQuery);
+  public abstract void deleteByKey(@Nonnull String keyString);
   public abstract void deleteByKeyPattern(@Nonnull T keyPatternQuery);
+  public abstract void deleteByKeyPattern(@Nonnull String keyPatternString);
   /*
   public abstract void deleteByIndex(T indexQuery);
   public abstract void deleteByIndexPattern(T indexPattern);
   */
   public abstract T getByKey(@Nonnull T keyQuery);
+  public abstract T getByKey(@Nonnull String keyString);
   public abstract List<T>  queryByKeyPattern(@Nonnull T keyPatternQuery);
+  public abstract List<T>  queryByKeyPattern(@Nonnull String keyPatternString);
   /*
   public abstract List<T>  queryByIndex(T indexQuery);
   public abstract List<T> queryByIndexPattern(T indexPatternQuery);

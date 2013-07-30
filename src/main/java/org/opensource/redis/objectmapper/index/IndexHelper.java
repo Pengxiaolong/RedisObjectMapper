@@ -18,9 +18,9 @@ public class IndexHelper {
   public static <T> Collection<String> buildIndexKeys(T entity){
     EntityInfo<T> entityInfo = EntityInfoFactory.getEntityInfo((Class<T>)entity.getClass());
     if(entityInfo.getIndexes().isEmpty()){
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
-    List<String> indexKeys = new ArrayList<>(entityInfo.getIndexes().size());
+    Set<String> indexKeys = new HashSet<>(entityInfo.getIndexes().size());
     try{
       for(IndexInfo indexInfo : entityInfo.getIndexes()){
         indexKeys.add(StringUtils.join(new Object[]{entityInfo.getName(), indexKeyPrefix, indexInfo.getProperty().getName(), getIndexPropertyValue(indexInfo, entity)}, ":"));
@@ -33,7 +33,7 @@ public class IndexHelper {
 
   private static <T> Object getIndexPropertyValue(IndexInfo indexInfo, T entity) throws InvocationTargetException, IllegalAccessException {
     Object propertyValue = indexInfo.getProperty().getReadMethod().invoke(entity);
-    if(indexInfo.getProperty().getPropertyType() == Date.class){
+    if(indexInfo.getProperty().getPropertyType() == Date.class && propertyValue != null){
       propertyValue = DateFormatUtils.format((Date) propertyValue, indexInfo.getDateFormat());
     }
     return propertyValue;
