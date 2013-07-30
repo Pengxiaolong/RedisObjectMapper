@@ -16,36 +16,34 @@ import java.util.List;
 public class KeySerializerHelper {
 
   public String serializeKey(Object object) {
-    try{
+    try {
       EntityInfo<?> entityInfo = EntityInfoFactory.getEntityInfo(object.getClass());
       List<KeyInfo> keyInfos = entityInfo.getKeyComponents();
-      Object[] keyComponents = new Object[keyInfos.size() + 1];
-      keyComponents[0] = entityInfo.getName();
+      Object[] keyComponents = new Object[keyInfos.size()];
 
-      for(int i = 0; i < keyInfos.size(); i++){
-        keyComponents[i+1] = getKeyComponentValue(keyInfos.get(i), object);
+      for (int i = 0; i < keyInfos.size(); i++) {
+        keyComponents[i] = getKeyComponentValue(keyInfos.get(i), object);
       }
 
       return StringUtils.join(keyComponents, ":");
-    }catch (InvocationTargetException | IllegalAccessException ex){
+    } catch (InvocationTargetException | IllegalAccessException ex) {
       throw new RuntimeException(ex);
     }
   }
 
-  public String serializeKeyPattern(Object object){
-    try{
+  public String serializeKeyPattern(Object object) {
+    try {
       EntityInfo<?> entityInfo = EntityInfoFactory.getEntityInfo(object.getClass());
       List<KeyInfo> keyInfos = entityInfo.getKeyComponents();
-      Object[] keyComponents = new Object[keyInfos.size() + 1];
-      keyComponents[0] = entityInfo.getName();
+      Object[] keyComponents = new Object[keyInfos.size()];
 
-      for(int i = 0; i < keyInfos.size(); i++){
+      for (int i = 0; i < keyInfos.size(); i++) {
         Object keyComponentValue = getKeyComponentValue(keyInfos.get(i), object);
-        keyComponents[i+1] = (keyComponentValue == null ? "*" : keyComponentValue);
+        keyComponents[i] = (keyComponentValue == null ? "*" : keyComponentValue);
       }
 
       return StringUtils.join(keyComponents, ":");
-    }catch (InvocationTargetException | IllegalAccessException ex){
+    } catch (InvocationTargetException | IllegalAccessException ex) {
       throw new RuntimeException(ex);
     }
   }
@@ -54,25 +52,25 @@ public class KeySerializerHelper {
     String[] keyComponents = key.split(":");
     List<KeyInfo> keyInfos = entityInfo.getKeyComponents();
 
-    assert keyComponents.length == keyInfos.size() + 1;
+    assert keyComponents.length == keyInfos.size();
 
-    try{
+    try {
       E entity = entityInfo.getJavaType().newInstance();
-      for(int i = 1; i < keyComponents.length; i++){
-        KeyInfo keyInfo = keyInfos.get(i - 1);
-        if(keyInfo.getProperty().getPropertyType() != Date.class){
+      for (int i = 0; i < keyComponents.length; i++) {
+        KeyInfo keyInfo = keyInfos.get(i);
+        if (keyInfo.getProperty().getPropertyType() != Date.class) {
           keyInfo.getProperty().getWriteMethod().invoke(entity, StringConverter.convertFromString(keyComponents[i], keyInfo.getProperty().getPropertyType()));
         }
       }
-      return  entity;
-    }catch (IllegalAccessException | InstantiationException | InvocationTargetException ex)  {
-      throw  new RuntimeException(ex);
+      return entity;
+    } catch (IllegalAccessException | InstantiationException | InvocationTargetException ex) {
+      throw new RuntimeException(ex);
     }
   }
 
   private static <T> Object getKeyComponentValue(KeyInfo keyInfo, T entity) throws InvocationTargetException, IllegalAccessException {
     Object propertyValue = keyInfo.getProperty().getReadMethod().invoke(entity);
-    if(keyInfo.getProperty().getPropertyType() == Date.class && propertyValue != null){
+    if (keyInfo.getProperty().getPropertyType() == Date.class && propertyValue != null) {
       propertyValue = DateFormatUtils.format((Date) propertyValue, keyInfo.getDateFormat());
     }
     return propertyValue;

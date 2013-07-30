@@ -40,63 +40,64 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
 
   @Override
   public void save(@Nonnull T t) {
-    final Tris<String, String, Collection<String>> serializeResult = entitySerializer.serialize(t);
+    save(Arrays.asList(t));
+  }
 
-    final Collection<String> originalIndexes = new ArrayList<>();
-    if (!EntityInfoFactory.getEntityInfo(t.getClass()).getIndexes().isEmpty()) {
-      T original = getByKey(t);
-      if (original != null) {
-        Tris<String, String, Collection<String>> originalSerializeResult = entitySerializer.serialize(original);
-        originalIndexes.addAll(originalSerializeResult.getThird());
-      }
-    }
-
+  @Override
+  public void save(@Nonnull final List<T> objects) {
+    final Iterator<T> originalEntities = getByKey((T[]) objects.toArray()).iterator();
     getRedisTemplate().execute(new SessionCallback<Object>() {
       @Override
       @SuppressWarnings("unchecked")
-      public Object execute(RedisOperations operations) throws DataAccessException {
+      public Object execute(final RedisOperations operations) throws DataAccessException {
         try {
           operations.multi();
-          save(serializeResult, operations);
-          //remove from old indexes if necessary
-          if (!originalIndexes.isEmpty()) {
+          for (T t : objects) {
+            T originalEntity = originalEntities.next();
+            Collection<String> originalIndexes = originalEntity == null ? Collections.<String>emptySet() : IndexHelper.buildIndexKeys(originalEntity);
+            Tris<String, String, Collection<String>> serializeResult = entitySerializer.serialize(t);
+            operations.opsForValue().set(getFullKey(serializeResult.getFirst()), serializeResult.getSecond());
+
+            for (String indexKey : serializeResult.getThird()) {
+              if (!originalIndexes.contains(indexKey)) {
+                operations.opsForSet().add(getFullKey(indexKey), serializeResult.getFirst());
+              }
+            }
+
             for (String originalIndex : originalIndexes) {
-              if(!serializeResult.getThird().contains(originalIndex))
+              if (!serializeResult.getThird().contains(originalIndex))
                 operations.opsForSet().remove(getFullKey(originalIndex), serializeResult.first);
             }
+
           }
+
           operations.exec();
-          return null;
         } catch (DataAccessException ex) {
           operations.discard();
           throw ex;
         }
+        return null;
       }
     });
 
   }
 
-  protected void save(final Tris<String, String, Collection<String>> serializeResult, RedisOperations<String, String> operations) {
-    operations.opsForValue().set(getFullKey(serializeResult.getFirst()), serializeResult.getSecond());
-    //save index
-    for (String indexKey : serializeResult.getThird()) {
-      operations.opsForSet().add(getFullKey(indexKey), serializeResult.getFirst());
-    }
-  }
-
-  @Override
-  public void save(@Nonnull final List<T> objects) {
-    for (T t : objects) {
-      save(t);
-    }
-  }
-
   protected String getFullKey(String key) {
-    return  getKeyPrefix() + key;
+    return getKeyPrefix() + key;
   }
 
-  protected String getKeyPrefix(){
-    return StringUtils.isNotBlank(getNamespace()) ? getNamespace() + ":" : "";
+  private volatile String keyPrefix;
+
+  protected String getKeyPrefix() {
+    if (keyPrefix == null) {
+      synchronized (this) {
+        if (keyPrefix == null) {
+          keyPrefix = StringUtils.isNotBlank(getNamespace()) ? getNamespace() + ":" + entityInfo.getName() + ":"
+                  : entityInfo.getName() + ":";
+        }
+      }
+    }
+    return keyPrefix;
   }
 
   @Override
@@ -105,13 +106,31 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
   }
 
   @Override
+  public void deleteByKey(T[] keyQueries) {
+    List<String> fullKeys = new ArrayList<>(keyQueries.length);
+    for (T t : keyQueries) {
+      fullKeys.add(getFullKey(keySerializerHelper.serializeKey(t)));
+    }
+    deleteByKeyString(fullKeys);
+  }
+
+  @Override
   public void deleteByKey(@Nonnull String keyString) {
-    String fullKey = getFullKey(entityInfo.getName() + ":" + keyString);
+    String fullKey = getFullKey(keyString);
     deleteByKeyString(Sets.newHashSet(fullKey));
-    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void deleteByKey(@Nonnull String[] keyStrings) {
+    List<String> fullKeys = new ArrayList<>(keyStrings.length);
+    for (String keyString : keyStrings) {
+      fullKeys.add(getFullKey(keyString));
+    }
+    deleteByKeyString(fullKeys);
   }
 
   private void deleteByKeyString(final Collection<String> fullKeys) {
+
     final List<T> results = getByKeyString(fullKeys);
     getRedisTemplate().execute(new SessionCallback<Object>() {
       @Override
@@ -120,12 +139,12 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
         operations.multi();
         operations.delete(fullKeys);
         if (!entityInfo.getIndexes().isEmpty()) {
-          Iterator<String> keyIterator = fullKeys.iterator();
+          Iterator<String> fullKeyIterator = fullKeys.iterator();
           for (T t : results) {
-            String entityKey = keyIterator.next();
+            String fullEntityKey = fullKeyIterator.next();
             if (t != null) {
               for (String indexKey : IndexHelper.buildIndexKeys(t)) {
-                operations.opsForSet().remove(indexKey, entityKey);
+                operations.opsForSet().remove(indexKey, fullEntityKey.substring(getKeyPrefix().length()));
               }
             }
           }
@@ -135,14 +154,6 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
       }
     });
 
-  }
-
-  public void deleteByKey(Collection<T> keyQuery) {
-    List<String> fullKeys = new ArrayList<>(keyQuery.size());
-    for (T t : keyQuery) {
-      fullKeys.add(getFullKey(keySerializerHelper.serializeKey(t)));
-    }
-    deleteByKeyString(fullKeys);
   }
 
   @Override
@@ -155,9 +166,9 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
 
   @Override
   public void deleteByKeyPattern(@Nonnull String keyPatternString) {
-    String fullKeyPatternString = getFullKey(entityInfo.getName() + ":" + keyPatternString);
+    String fullKeyPatternString = getFullKey(keyPatternString);
     Set<String> keys = getRedisTemplate().keys(fullKeyPatternString);
-    if(!keys.isEmpty()){
+    if (!keys.isEmpty()) {
       deleteByKeyString(keys);
     }
   }
@@ -169,13 +180,35 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
   }
 
   @Override
+  public List<T> getByKey(@Nonnull T[] keyQueries) {
+    List<String> fullKeys = new ArrayList<>(keyQueries.length);
+    for (T keyQuery : keyQueries) {
+      fullKeys.add(getFullKey(keySerializerHelper.serializeKey(keyQuery)));
+    }
+    return getByKeyString(fullKeys);
+  }
+
+  @Override
   public T getByKey(@Nonnull String keyString) {
-    String fullKeyString = getFullKey(entityInfo.getName() + ":" + keyString);
+    String fullKeyString = getFullKey(keyString);
     List<T> ret = getByKeyString(Arrays.asList(fullKeyString));
     return ret.isEmpty() ? null : ret.get(0);
   }
 
-  private List<T> getByKeyString(Collection<String> fullRedisKeys) {
+  @Override
+  public List<T> getByKey(@Nonnull String[] keyStrings) {
+    List<String> fullKeys = new ArrayList<>(keyStrings.length);
+    for (String keyString : keyStrings) {
+      fullKeys.add(getFullKey(keyString));
+    }
+    return getByKeyString(fullKeys);  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  private List<T> getByKeyString(@Nonnull Collection<String> fullRedisKeys) {
+
+    if (fullRedisKeys.isEmpty()) {
+      return Collections.emptyList();
+    }
 
     List<String> rawResults = getRedisTemplate().opsForValue().multiGet(fullRedisKeys);
 
@@ -185,21 +218,13 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
     for (String rawResult : rawResults) {
       String key = keysIterator.next();
       if (StringUtils.isNotBlank(rawResult)) {
-        results.add(entitySerializer.deserialize(key.substring(keyPrefixLength, key.length()), rawResult));
+        results.add(entitySerializer.deserialize(key.substring(keyPrefixLength), rawResult));
       } else {
         results.add(null);
       }
     }
 
     return results;
-  }
-
-  public List<T> getByKey(List<T> keyQueries) {
-    List<String> keys = new ArrayList<>(keyQueries.size());
-    for (T t : keyQueries) {
-      keys.add(getFullKey(keySerializerHelper.serializeKey(t)));
-    }
-    return getByKeyString(keys);
   }
 
 
@@ -216,7 +241,7 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
 
   @Override
   public List<T> queryByKeyPattern(@Nonnull String keyPatternString) {
-    String fullKeyPatternString = getFullKey(entityInfo.getName() + ":" + keyPatternString);
+    String fullKeyPatternString = getFullKey(keyPatternString);
     final Set<String> keys = getRedisTemplate().keys(fullKeyPatternString);
     if (keys.isEmpty()) {
       return Collections.emptyList();
@@ -224,6 +249,5 @@ public class JsonBasedRedisObjectRepository<T> extends RedisObjectRepository<T> 
       return getByKeyString(keys);
     }
   }
-
 
 }

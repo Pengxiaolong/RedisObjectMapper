@@ -1,11 +1,10 @@
 package org.opensource.redis.objectmapper;
 
 /**
- *
+ * @param <F> type of the first element
+ * @param <S> type of the second element
+ * @param <T> type of the third element
  * @author xlpeng
- * @param <F>  type of the first element
- * @param <S>  type of the second element
- * @param <T>  type of the third element
  */
 public class Tris<F, S, T> {
   F first;
@@ -13,10 +12,9 @@ public class Tris<F, S, T> {
   T third;
 
   /**
-   *
-   * @param first   the first element
-   * @param second  the second element
-   * @param third   the third element
+   * @param first  the first element
+   * @param second the second element
+   * @param third  the third element
    */
   public Tris(F first, S second, T third) {
     this.first = first;

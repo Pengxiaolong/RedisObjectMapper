@@ -8,12 +8,12 @@ import org.opensource.redis.objectmapper.annotation.KeyComponent;
 import java.util.Date;
 
 /**
-* Created with IntelliJ IDEA.
-* User: xlpeng
-* Date: 13-7-29
-* Time: 下午11:42
-* To change this template use File | Settings | File Templates.
-*/
+ * Created with IntelliJ IDEA.
+ * User: xlpeng
+ * Date: 13-7-29
+ * Time: 下午11:42
+ * To change this template use File | Settings | File Templates.
+ */
 @Entity()
 public class Person {
   @KeyComponent(index = 1)

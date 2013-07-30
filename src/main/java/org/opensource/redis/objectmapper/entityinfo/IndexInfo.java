@@ -5,7 +5,7 @@ import org.opensource.redis.objectmapper.annotation.Index;
 import java.beans.PropertyDescriptor;
 
 /**
- * @author  xlpeng
+ * @author xlpeng
  */
 public class IndexInfo {
   PropertyDescriptor property;

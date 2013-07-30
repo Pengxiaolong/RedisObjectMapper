@@ -3,7 +3,6 @@ package org.opensource.redis.objectmapper;
 import com.google.common.collect.Sets;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.opensource.redis.objectmapper.domain.Person;
 import org.opensource.redis.objectmapper.domain.Student;
 import org.springframework.context.ApplicationContext;
@@ -14,18 +13,14 @@ import java.util.HashSet;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Created with IntelliJ IDEA.
- * User: xlpeng
- * Date: 13-7-30
- * Time: 上午2:07
- * To change this template use File | Settings | File Templates.
+ * @author xlpeng
  */
-
 public class JsonBasedRedisObjectRepositoryTest extends AbstractTest {
   static ApplicationContext applicationContext;
-  static JsonBasedRedisObjectRepositoryFactory repositoryFactory ;
+  static JsonBasedRedisObjectRepositoryFactory repositoryFactory;
+
   @BeforeClass
-  public static void setup(){
+  public static void setup() {
     applicationContext = new ClassPathXmlApplicationContext("classpath:application-context.xml");
     repositoryFactory = applicationContext.getBean(JsonBasedRedisObjectRepositoryFactory.class);
   }
@@ -36,14 +31,14 @@ public class JsonBasedRedisObjectRepositoryTest extends AbstractTest {
 
     long start = System.currentTimeMillis();
 
-    for(int i = 0; i< 1000; i++){
+    for (int i = 0; i < 1000; i++) {
       redisObjectRepository.save(person);
     }
     System.out.println(System.currentTimeMillis() - start);
     assertEquals(person, redisObjectRepository.getByKey(person));
 
     RedisObjectRepository<Student> studentRedisObjectRepository = repositoryFactory.getRedisObjectRepository("test", Student.class);
-    for(int i = 0; i< 1000; i++){
+    for (int i = 0; i < 1000; i++) {
       studentRedisObjectRepository.save(student);
     }
     System.out.println(System.currentTimeMillis() - start);

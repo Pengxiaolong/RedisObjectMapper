@@ -10,30 +10,30 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
- * @author  xlpeng
+ * @author xlpeng
  */
 public class IndexHelper {
   public static final String indexKeyPrefix = "_idx_";
 
-  public static <T> Collection<String> buildIndexKeys(T entity){
-    EntityInfo<T> entityInfo = EntityInfoFactory.getEntityInfo((Class<T>)entity.getClass());
-    if(entityInfo.getIndexes().isEmpty()){
+  public static <T> Collection<String> buildIndexKeys(T entity) {
+    EntityInfo<T> entityInfo = EntityInfoFactory.getEntityInfo((Class<T>) entity.getClass());
+    if (entityInfo.getIndexes().isEmpty()) {
       return Collections.emptySet();
     }
     Set<String> indexKeys = new HashSet<>(entityInfo.getIndexes().size());
-    try{
-      for(IndexInfo indexInfo : entityInfo.getIndexes()){
-        indexKeys.add(StringUtils.join(new Object[]{entityInfo.getName(), indexKeyPrefix, indexInfo.getProperty().getName(), getIndexPropertyValue(indexInfo, entity)}, ":"));
+    try {
+      for (IndexInfo indexInfo : entityInfo.getIndexes()) {
+        indexKeys.add(StringUtils.join(new Object[]{indexKeyPrefix, indexInfo.getProperty().getName(), getIndexPropertyValue(indexInfo, entity)}, ":"));
       }
       return indexKeys;
     } catch (InvocationTargetException | IllegalAccessException e) {
-      throw  new RuntimeException(e);
+      throw new RuntimeException(e);
     }
   }
 
   private static <T> Object getIndexPropertyValue(IndexInfo indexInfo, T entity) throws InvocationTargetException, IllegalAccessException {
     Object propertyValue = indexInfo.getProperty().getReadMethod().invoke(entity);
-    if(indexInfo.getProperty().getPropertyType() == Date.class && propertyValue != null){
+    if (indexInfo.getProperty().getPropertyType() == Date.class && propertyValue != null) {
       propertyValue = DateFormatUtils.format((Date) propertyValue, indexInfo.getDateFormat());
     }
     return propertyValue;

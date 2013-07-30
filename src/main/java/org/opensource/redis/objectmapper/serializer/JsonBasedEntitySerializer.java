@@ -26,12 +26,11 @@ public class JsonBasedEntitySerializer<T> implements EntitySerializer<T, String>
 
   static {
     objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-    objectMapper.getSerializationConfig().addMixInAnnotations(Object.class, PropertyFilterMixIn.class );
+    objectMapper.getSerializationConfig().addMixInAnnotations(Object.class, PropertyFilterMixIn.class);
   }
 
   @JsonFilter(PropertyFilterMixIn.filterId)
-  static class PropertyFilterMixIn
-  {
+  static class PropertyFilterMixIn {
     final static String filterId = "filter properties by name";
   }
 
@@ -76,7 +75,7 @@ public class JsonBasedEntitySerializer<T> implements EntitySerializer<T, String>
       //if is parsimonious storage, filter out all the key component fields.
       if (entityInfo.isParsimoniousStorage()) {
         for (KeyInfo keyInfo : entityInfo.getKeyComponents()) {
-          if(keyInfo.getProperty().getPropertyType() != Date.class)
+          if (keyInfo.getProperty().getPropertyType() != Date.class)
             properties.add(keyInfo.getProperty().getName());
         }
       }

@@ -7,7 +7,6 @@ import org.opensource.redis.objectmapper.entityinfo.EntityInfo;
 import org.opensource.redis.objectmapper.entityinfo.EntityInfoFactory;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -22,7 +21,7 @@ public class EntityInfoFactoryTest {
     assertEquals(personEntityInfo.getKeyComponents().size(), 1);
     assertEquals(personEntityInfo.getKeyComponents().get(0).getProperty().getName(), "id");
     assertEquals(personEntityInfo.getProperties().size(), 4);
-    assertEquals(3,personEntityInfo.getIndexes().size() );
+    assertEquals(3, personEntityInfo.getIndexes().size());
     assertTrue(personEntityInfo.isParsimoniousStorage());
     assertEquals(personEntityInfo.getName(), "Person");
 

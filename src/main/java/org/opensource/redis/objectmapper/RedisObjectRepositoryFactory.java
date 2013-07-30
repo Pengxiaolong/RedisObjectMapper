@@ -8,5 +8,5 @@ package org.opensource.redis.objectmapper;
  * To change this template use File | Settings | File Templates.
  */
 public interface RedisObjectRepositoryFactory {
-  <T> RedisObjectRepository<T> getRedisObjectRepository(String namespace, Class<T> javaType );
+  <T> RedisObjectRepository<T> getRedisObjectRepository(String namespace, Class<T> javaType);
 }

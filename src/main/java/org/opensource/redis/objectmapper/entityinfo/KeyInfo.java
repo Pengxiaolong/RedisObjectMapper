@@ -5,12 +5,12 @@ import org.opensource.redis.objectmapper.annotation.KeyComponent;
 import java.beans.PropertyDescriptor;
 
 /**
-* Created with IntelliJ IDEA.
-* User: xlpeng
-* Date: 13-7-28
-* Time: 上午3:49
-* To change this template use File | Settings | File Templates.
-*/
+ * Created with IntelliJ IDEA.
+ * User: xlpeng
+ * Date: 13-7-28
+ * Time: 上午3:49
+ * To change this template use File | Settings | File Templates.
+ */
 public class KeyInfo {
   PropertyDescriptor property;
   KeyComponent keyComponent;

@@ -1,7 +1,6 @@
 package org.opensource.redis.objectmapper;
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.BeforeClass;
 import org.opensource.redis.objectmapper.domain.Person;
@@ -20,6 +19,7 @@ import java.text.ParseException;
 public abstract class AbstractTest {
   protected static Person person;
   protected static Student student;
+
   @BeforeClass
   public static void beforeClass() throws ParseException, InvocationTargetException, IllegalAccessException {
     person = new Person();

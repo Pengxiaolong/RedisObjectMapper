@@ -24,7 +24,7 @@ public class EntityInfoFactory {
    * get instance of {@link EntityInfo}.
    *
    * @param javaType java type
-   * @return   instance of EntityInfo
+   * @return instance of EntityInfo
    */
   @SuppressWarnings("unchecked")
   public static <T> EntityInfo<T> getEntityInfo(Class<T> javaType) {
